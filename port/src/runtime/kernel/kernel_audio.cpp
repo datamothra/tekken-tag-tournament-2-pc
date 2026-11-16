@@ -62,6 +62,12 @@ static bool PaceAudio()
     static auto next = std::chrono::steady_clock::time_point{};
     static bool enabled = [] {
         const char* value = std::getenv("TTT2_AUDIO_PACE");
+#if defined(__APPLE__)
+        // CoreAudio pulls 1,024 frames per callback. Unpaced, four 256-frame guest blocks render
+        // back to back and resampled voices jump at every block edge: menus and music sound slow
+        // and choppy. Pace by default on macOS; TTT2_AUDIO_PACE=0 turns it off.
+        if (!value || !*value) return true;
+#endif
         return value && *value == '1';
     }();
     const auto now = std::chrono::steady_clock::now();
